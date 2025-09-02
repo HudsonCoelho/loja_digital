@@ -1,0 +1,143 @@
+{% extends "base.html" %}
+
+{% block title %}Gráficos de Vendas{% endblock %}
+
+{% block extra_css %}
+<style>
+    .chart-container {
+        position: relative;
+        height: 400px;
+        margin-bottom: 30px;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="card shadow-sm mb-4">
+                <div class="card-header bg-white">
+                    <h4 class="my-0"><i class="fas fa-chart-line me-2"></i>Gráficos de Vendas</h4>
+                </div>
+                <div class="card-body">
+                    <form method="POST" class="row g-3 mb-4">
+                        <div class="col-md-4">
+                            <label class="form-label">Data Início:</label>
+                            <input type="date" name="data_inicio" value="{{ data_inicio }}" class="form-control">
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">Data Fim:</label>
+                            <input type="date" name="data_fim" value="{{ data_fim }}" class="form-control">
+                        </div>
+                        <div class="col-md-4 d-flex align-items-end">
+                            <button type="submit" class="btn btn-primary me-2">
+                                <i class="fas fa-filter me-2"></i>Filtrar
+                            </button>
+                            <a href="/graficos" class="btn btn-secondary">
+                                <i class="fas fa-sync-alt me-2"></i>Limpar
+                            </a>
+                        </div>
+                    </form>
+
+                    <div class="chart-container">
+                        <h5><i class="fas fa-calendar-day me-2"></i>Vendas por Dia</h5>
+                        <canvas id="graficoDia"></canvas>
+                    </div>
+
+                    <div class="chart-container">
+                        <h5><i class="fas fa-calendar-alt me-2"></i>Vendas por Mês</h5>
+                        <canvas id="graficoMes"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    // Formatar valores monetários
+    const formatMoney = (value) => {
+        return 'R$ ' + value.toFixed(2).replace('.', ',').replace(/(\d)(?=(\d{3})+\,)/g, '$1.')
+    };
+
+    // Gráfico de vendas diárias
+    const vendasDia = JSON.parse('{{ vendas_dia | tojson | safe }}');
+    if (vendasDia.labels && vendasDia.data) {
+        new Chart(document.getElementById('graficoDia'), {
+            type: 'bar',
+            data: {
+                labels: vendasDia.labels,
+                datasets: [{
+                    label: 'Vendas Diárias',
+                    data: vendasDia.data,
+                    backgroundColor: 'rgba(54, 162, 235, 0.7)',
+                    borderColor: 'rgba(54, 162, 235, 1)',
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    tooltip: {
+                        callbacks: {
+                            label: (context) => formatMoney(context.raw)
+                        }
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        ticks: {
+                            callback: (value) => formatMoney(value)
+                        }
+                    }
+                }
+            }
+        });
+    }
+
+    // Gráfico de vendas mensais
+    const vendasMes = JSON.parse('{{ vendas_mes | tojson | safe }}');
+    if (vendasMes.labels && vendasMes.data) {
+        new Chart(document.getElementById('graficoMes'), {
+            type: 'line',
+            data: {
+                labels: vendasMes.labels,
+                datasets: [{
+                    label: 'Vendas Mensais',
+                    data: vendasMes.data,
+                    borderColor: 'rgba(75, 192, 192, 1)',
+                    backgroundColor: 'rgba(75, 192, 192, 0.1)',
+                    fill: true,
+                    tension: 0.3,
+                    borderWidth: 2
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    tooltip: {
+                        callbacks: {
+                            label: (context) => formatMoney(context.raw)
+                        }
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        ticks: {
+                            callback: (value) => formatMoney(value)
+                        }
+                    }
+                }
+            }
+        });
+    }
+</script>
+{% endblock %}

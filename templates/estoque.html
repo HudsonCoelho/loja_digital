@@ -1,0 +1,309 @@
+{% extends "base.html" %}
+
+{% block title %}Estoque de Produtos{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="card shadow-sm mb-4">
+                <div class="card-header bg-white d-flex justify-content-between align-items-center">
+                    <h4 class="my-0"><i class="fas fa-boxes me-2"></i>Estoque de Produtos</h4>
+                    <a href="/cadastrar" class="btn btn-primary btn-sm">
+                        <i class="fas fa-plus me-2"></i>Novo Produto
+                    </a>
+                </div>
+                <div class="card-body">
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="fas fa-tag"></i></span>
+                                <input type="text" class="form-control" id="buscaNome" placeholder="Buscar por nome...">
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="fas fa-barcode"></i></span>
+                                <input type="number" class="form-control" id="buscaCodigo" placeholder="Buscar por código...">
+                                <button class="btn btn-outline-secondary" type="button" id="limparBusca">
+                                    <i class="fas fa-times"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead class="table-light">
+                                <tr>
+                                    <th><i class="fas fa-barcode me-2"></i>ID</th>
+                                    <th><i class="fas fa-image me-2"></i>Imagem</th>
+                                    <th><i class="fas fa-tag me-2"></i>Produto</th>
+                                    <th class="text-end"><i class="fas fa-dollar-sign me-2"></i>Preço Unitário</th>
+                                    <th class="text-end"><i class="fas fa-boxes me-2"></i>Quantidade</th>
+                                    <th class="text-end"><i class="fas fa-dollar-sign me-2"></i>Valor Total</th>
+                                    <th class="text-center"><i class="fas fa-cogs me-2"></i>Ações</th>
+                                </tr>
+                            </thead>
+                            <thead class="table-secondary">
+                                <tr>
+                                    <th colspan="7" class="text-center small">
+                                        <i class="fas fa-info-circle me-1"></i>
+                                        <strong>Legenda:</strong> 
+                                        <i class="fas fa-edit text-primary"></i> Editar | 
+                                        <i class="fas fa-trash-alt text-danger"></i> Excluir (Modal) | 
+                                        <i class="fas fa-trash text-danger"></i> Excluir Direto | 
+                                        <i class="fas fa-bomb text-warning"></i> Excluir com Vendas
+                                    </th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for produto in produtos %}
+                                <tr>
+                                    <td>{{ produto[0] }}</td>
+                                    <td>
+                                        {% if produto[4] %}
+                                            <img src="{{ url_for('static', filename=produto[4]) }}" 
+                                                 alt="{{ produto[1] }}" 
+                                                 class="img-thumbnail" 
+                                                 style="width: 50px; height: 50px; object-fit: cover;"
+                                                 data-bs-toggle="modal" 
+                                                 data-bs-target="#imageModal{{ produto[0] }}"
+                                                 style="cursor: pointer;">
+                                            
+                                                                                         <!-- Modal para visualizar imagem -->
+                                             <div class="modal fade" id="imageModal{{ produto[0] }}" tabindex="-1" aria-labelledby="imageModalLabel{{ produto[0] }}" aria-hidden="true">
+                                                 <div class="modal-dialog modal-lg">
+                                                     <div class="modal-content">
+                                                         <div class="modal-header">
+                                                             <h5 class="modal-title" id="imageModalLabel{{ produto[0] }}">{{ produto[1] }}</h5>
+                                                             <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                                         </div>
+                                                         <div class="modal-body text-center">
+                                                             <img src="{{ url_for('static', filename=produto[4]) }}" 
+                                                                  alt="{{ produto[1] }}" 
+                                                                  class="img-fluid">
+                                                         </div>
+                                                         <div class="modal-footer">
+                                                             <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fechar</button>
+                                                         </div>
+                                                     </div>
+                                                 </div>
+                                             </div>
+                                        {% else %}
+                                            <div class="bg-light text-muted d-flex align-items-center justify-content-center" 
+                                                 style="width: 50px; height: 50px; border-radius: 4px;">
+                                                <i class="fas fa-image"></i>
+                                            </div>
+                                        {% endif %}
+                                    </td>
+                                    <td>{{ produto[1] }}</td>
+                                    <td class="text-end">R$ {{ "%.2f"|format(produto[2]) }}</td>
+                                    <td class="text-end">{{ produto[3] }}</td>
+                                    <td class="text-end">R$ {{ "%.2f"|format(produto[2] * produto[3]) }}</td>
+                                    <td class="text-center">
+                                        <div class="d-flex gap-1">
+                                            <a href="/editar/{{ produto[0] }}" class="btn btn-outline-primary btn-sm" title="Editar">
+                                                <i class="fas fa-edit"></i>
+                                            </a>
+                                            <button class="btn btn-outline-danger btn-sm" title="Excluir (Modal)" data-bs-toggle="modal" 
+                                                    data-bs-target="#confirmModal{{ produto[0] }}">
+                                                <i class="fas fa-trash-alt"></i>
+                                            </button>
+                                            <a href="/excluir/{{ produto[0] }}" class="btn btn-outline-danger btn-sm" 
+                                               onclick="return confirm('Tem certeza que deseja excluir o produto {{ produto[1] }}?')" 
+                                               title="Excluir Direto">
+                                                <i class="fas fa-trash"></i>
+                                            </a>
+                                            <a href="/excluir_com_vendas/{{ produto[0] }}" class="btn btn-outline-warning btn-sm" 
+                                               onclick="return confirm('ATENÇÃO: Esta ação irá excluir o produto {{ produto[1] }} E TODAS as vendas relacionadas. Tem certeza?')" 
+                                               title="Excluir com Vendas">
+                                                <i class="fas fa-bomb"></i>
+                                            </a>
+                                        </div>
+
+                                        <!-- Modal de Confirmação -->
+                                        <div class="modal fade" id="confirmModal{{ produto[0] }}" tabindex="-1" aria-labelledby="confirmModalLabel{{ produto[0] }}" aria-hidden="true">
+                                            <div class="modal-dialog">
+                                                <div class="modal-content">
+                                                    <div class="modal-header">
+                                                        <h5 class="modal-title" id="confirmModalLabel{{ produto[0] }}">Confirmar Exclusão</h5>
+                                                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                                    </div>
+                                                    <div class="modal-body">
+                                                        <p>Tem certeza que deseja excluir o produto <strong>{{ produto[1] }}</strong>?</p>
+                                                        <div class="alert alert-warning">
+                                                            <i class="fas fa-exclamation-triangle me-2"></i>
+                                                            <strong>Atenção:</strong> Se o produto tiver vendas associadas, você precisará usar a opção "Excluir com Vendas".
+                                                        </div>
+                                                    </div>
+                                                    <div class="modal-footer">
+                                                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                                                            <i class="fas fa-times me-2"></i>Cancelar
+                                                        </button>
+                                                        <a href="/excluir/{{ produto[0] }}" class="btn btn-danger">
+                                                            <i class="fas fa-trash-alt me-2"></i>Excluir
+                                                        </a>
+                                                        <a href="/excluir_com_vendas/{{ produto[0] }}" class="btn btn-danger" 
+                                                           onclick="return confirm('ATENÇÃO: Esta ação irá excluir o produto E TODAS as vendas relacionadas. Tem certeza?')">
+                                                            <i class="fas fa-trash-alt me-2"></i>Excluir com Vendas
+                                                        </a>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                            <tfoot>
+                                <tr class="table-active">
+                                    <th colspan="4">Total Geral</th>
+                                    <th class="text-end">{{ produtos|sum(attribute=3) }}</th>
+                                    <th class="text-end">R$ {{ "%.2f"|format(produtos|sum(attribute=2) * produtos|sum(attribute=3)) }}</th>
+                                    <th></th>
+                                </tr>
+                            </tfoot>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const buscaNome = document.getElementById('buscaNome');
+    const buscaCodigo = document.getElementById('buscaCodigo');
+    const limparBusca = document.getElementById('limparBusca');
+    const tabela = document.querySelector('tbody');
+    const linhas = tabela.querySelectorAll('tr');
+
+    // Função para filtrar produtos por nome
+    function filtrarPorNome(termo) {
+        const termoLower = termo.toLowerCase();
+        
+        linhas.forEach(linha => {
+            const nomeProduto = linha.querySelector('td:nth-child(3)').textContent.toLowerCase();
+            
+            if (nomeProduto.includes(termoLower)) {
+                linha.style.display = '';
+            } else {
+                linha.style.display = 'none';
+            }
+        });
+    }
+
+    // Função para filtrar produtos por código
+    function filtrarPorCodigo(termo) {
+        linhas.forEach(linha => {
+            const idProduto = linha.querySelector('td:nth-child(1)').textContent;
+            
+            if (idProduto.includes(termo)) {
+                linha.style.display = '';
+            } else {
+                linha.style.display = 'none';
+            }
+        });
+    }
+
+    // Função para mostrar todos os produtos
+    function mostrarTodos() {
+        linhas.forEach(linha => {
+            linha.style.display = '';
+        });
+    }
+
+    // Busca por nome em tempo real
+    buscaNome.addEventListener('input', function() {
+        const termoNome = this.value.trim();
+        const termoCodigo = buscaCodigo.value.trim();
+        
+        if (termoNome) {
+            filtrarPorNome(termoNome);
+        } else if (termoCodigo) {
+            filtrarPorCodigo(termoCodigo);
+        } else {
+            mostrarTodos();
+        }
+    });
+
+    // Busca por código em tempo real
+    buscaCodigo.addEventListener('input', function() {
+        const termoCodigo = this.value.trim();
+        const termoNome = buscaNome.value.trim();
+        
+        if (termoCodigo) {
+            filtrarPorCodigo(termoCodigo);
+        } else if (termoNome) {
+            filtrarPorNome(termoNome);
+        } else {
+            mostrarTodos();
+        }
+    });
+
+    // Limpar busca
+    limparBusca.addEventListener('click', function() {
+        buscaNome.value = '';
+        buscaCodigo.value = '';
+        mostrarTodos();
+    });
+
+    // Busca por Enter
+    buscaNome.addEventListener('keypress', function(e) {
+        if (e.key === 'Enter') {
+            e.preventDefault();
+        }
+    });
+
+    buscaCodigo.addEventListener('keypress', function(e) {
+        if (e.key === 'Enter') {
+            e.preventDefault();
+        }
+    });
+
+    // Garantir que os modais funcionem corretamente
+    const modals = document.querySelectorAll('.modal');
+    modals.forEach(modal => {
+        // Fechar modal ao clicar fora dele
+        modal.addEventListener('click', function(e) {
+            if (e.target === this) {
+                const modalInstance = bootstrap.Modal.getInstance(this);
+                if (modalInstance) {
+                    modalInstance.hide();
+                }
+            }
+        });
+
+        // Fechar modal com tecla ESC
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') {
+                const modalInstance = bootstrap.Modal.getInstance(modal);
+                if (modalInstance) {
+                    modalInstance.hide();
+                }
+            }
+        });
+    });
+
+    // Adicionar debug para verificar se os botões de exclusão estão funcionando
+    const botoesExcluir = document.querySelectorAll('[data-bs-target^="#confirmModal"]');
+    botoesExcluir.forEach(botao => {
+        botao.addEventListener('click', function(e) {
+            console.log('Botão de exclusão clicado:', this);
+            const targetModal = this.getAttribute('data-bs-target');
+            console.log('Modal alvo:', targetModal);
+        });
+    });
+
+    // Verificar se Bootstrap está carregado
+    if (typeof bootstrap !== 'undefined') {
+        console.log('Bootstrap carregado com sucesso');
+    } else {
+        console.error('Bootstrap não está carregado!');
+    }
+});
+</script>
+{% endblock %}

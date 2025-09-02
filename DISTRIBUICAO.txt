@@ -1,0 +1,42 @@
+========================================
+    SISTEMA DE VENDAS - DISTRIBUIÇÃO
+========================================
+
+📦 ARQUIVOS PARA DISTRIBUIÇÃO:
+
+1. SistemaVendas.exe (pasta dist/)
+2. instalar_sistema.bat
+3. README_EXECUTAVEL.md
+
+📋 INSTRUÇÕES PARA O USUÁRIO FINAL:
+
+1. Extraia todos os arquivos em uma pasta
+2. Execute o arquivo "instalar_sistema.bat"
+3. O sistema abrirá automaticamente no navegador
+4. Acesse: http://127.0.0.1:5000
+
+🔧 CARACTERÍSTICAS DO EXECUTÁVEL:
+
+✅ Totalmente independente (não precisa de Python)
+✅ Banco de dados SQLite integrado
+✅ Interface web moderna e responsiva
+✅ Upload de imagens para produtos
+✅ Sistema completo de vendas e estoque
+✅ Relatórios e gráficos
+✅ Personalização de fundo
+
+📊 FUNCIONALIDADES INCLUÍDAS:
+
+• Dashboard com estatísticas em tempo real
+• Cadastro de produtos com imagens
+• Gerenciamento de estoque (editar/excluir)
+• Registro de vendas com busca por código/nome
+• Relatórios detalhados de vendas
+• Gráficos de análise
+• Configurações personalizáveis
+
+🚀 PRONTO PARA USO!
+
+O executável pode ser usado em qualquer computador Windows
+sem necessidade de instalação de software adicional.
+
