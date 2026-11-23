@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <title>Cupom Não Fiscal · Estilo Único</title>
+  <link rel="icon" type="image/svg+xml" href="/static/erp/img/favicon.svg">
+  <link rel="shortcut icon" href="/static/erp/img/favicon.ico">
+  <style>
+    @import url('/static/erp/css/fonts.css');
+    
+    * { box-sizing: border-box; }
+    body {
+      margin: 0; padding: 0;
+      background: #f4f4f5;
+      font-family: 'Courier Prime', 'Courier New', Courier, monospace;
+      color: #000;
+      font-size: 13px;
+      line-height: 1.4;
+    }
+    
+    .receipt {
+      background: #fff;
+      max-width: 300px;
+      margin: 0 auto;
+      padding: 16px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+      min-height: 100vh;
+    }
+    
+    @media print {
+      body { background: transparent; }
+      .receipt { 
+        box-shadow: none; 
+        margin: 0; 
+        padding: 0; 
+        max-width: 100%; 
+        width: 100%; 
+      }
+      .no-print { display: none !important; }
+    }
+
+    .text-center { text-align: center; }
+    .text-right { text-align: right; }
+    .bold { font-weight: 700; }
+    
+    .header { margin-bottom: 16px; border-bottom: 1px dashed #000; padding-bottom: 8px; }
+    .header h1 { font-size: 18px; margin: 0 0 4px 0; text-transform: uppercase; }
+    .header p { margin: 0; font-size: 11px; }
+
+    .meta { margin-bottom: 12px; font-size: 11px; border-bottom: 1px dashed #000; padding-bottom: 8px; }
+    
+    .items { width: 100%; border-collapse: collapse; margin-bottom: 12px; }
+    .items th, .items td { padding: 4px 0; vertical-align: top; }
+    .items th { border-bottom: 1px dashed #000; text-align: left; font-size: 11px; }
+    .items .item-name { max-width: 140px; word-break: break-all; }
+    .items .item-qty { text-align: center; width: 30px; }
+    .items .item-total { text-align: right; width: 60px; }
+    
+    .totals { border-top: 1px dashed #000; padding-top: 8px; margin-bottom: 12px; }
+    .totals-row { display: flex; justify-content: space-between; margin-bottom: 4px; }
+    .totals-row.grand-total { font-size: 16px; font-weight: 700; border-top: 1px dashed #000; padding-top: 8px; margin-top: 4px; }
+
+    .payments { border-top: 1px dashed #000; padding-top: 8px; margin-bottom: 16px; font-size: 12px; }
+    
+    .footer { text-align: center; font-size: 11px; border-top: 1px dashed #000; padding-top: 12px; margin-bottom: 16px; }
+    
+    /* Loading state */
+    .loading { text-align: center; padding: 40px 20px; font-family: sans-serif; color: #666; }
+  </style>
+</head>
+<body>
+  
+  <div id="loading" class="loading no-print">Carregando dados da venda...</div>
+  
+  <div id="receipt" class="receipt" hidden>
+    <div class="header text-center">
+      <h1 id="loja-nome">Estilo Único</h1>
+      <p id="loja-doc" hidden></p>
+      <p id="loja-end" hidden></p>
+      <p id="loja-tel" hidden></p>
+      <p style="margin-top: 4px; font-weight: bold;">Documento Não Fiscal</p>
+    </div>
+    
+    <div class="meta">
+      <div>Data: <span id="r-data"></span></div>
+      <div>Venda: <span id="r-codigo" class="bold"></span></div>
+      <div>Vendedor: <span id="r-vendedor"></span></div>
+    </div>
+    
+    <table class="items" id="r-items">
+      <thead>
+        <tr>
+          <th>Item</th>
+          <th class="item-qty">Qtd</th>
+          <th class="item-total">Vl.Tot</th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+    
+    <div class="totals">
+      <div class="totals-row">
+        <span>Subtotal</span>
+        <span id="r-subtotal"></span>
+      </div>
+      <div class="totals-row">
+        <span>Desconto</span>
+        <span id="r-desconto"></span>
+      </div>
+      <div class="totals-row grand-total">
+        <span>TOTAL</span>
+        <span id="r-total"></span>
+      </div>
+    </div>
+    
+    <div class="payments" id="r-payments">
+      <!-- payments go here -->
+    </div>
+    
+    <div class="footer">
+      <p class="bold" id="cupom-rodape">OBRIGADO PELA PREFERÊNCIA!</p>
+      <p id="cupom-slogan">Vista-se com estilo!</p>
+    </div>
+    
+    <div class="text-center no-print" style="margin-top: 20px;">
+      <button onclick="window.print()" style="padding: 10px 20px; cursor: pointer; font-family: sans-serif; background: #000; color: #fff; border: none; border-radius: 4px;">Imprimir Novamente</button>
+      <button onclick="window.close()" style="padding: 10px 20px; cursor: pointer; font-family: sans-serif; background: #e4e4e7; color: #000; border: none; border-radius: 4px; margin-left: 8px;">Fechar</button>
+    </div>
+  </div>
+
+  <script>
+    const fmtMoney = (val) => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(val);
+    
+    async function loadReceipt() {
+      const urlParams = new URLSearchParams(window.location.search);
+      const id = urlParams.get('id');
+      if (!id) {
+        document.getElementById('loading').textContent = 'ID da venda não informado.';
+        return;
+      }
+
+      try {
+        const [resVenda, resCfg] = await Promise.all([
+          fetch(`/api/vendas/${id}`),
+          fetch(`/api/configuracoes`).catch(() => null)
+        ]);
+
+        if (!resVenda.ok) throw new Error('Erro ao buscar dados da venda');
+        const venda = await resVenda.json();
+
+        // Carrega configurações da loja se disponíveis
+        if (resCfg && resCfg.ok) {
+          try {
+            const cfg = await resCfg.json();
+            if (cfg.loja_nome) {
+              document.getElementById('loja-nome').textContent = cfg.loja_nome;
+            }
+            if (cfg.loja_documento && cfg.loja_documento.trim()) {
+              const doc = cfg.loja_documento.trim();
+              const label = doc.replace(/\D/g, '').length > 11 ? 'CNPJ: ' : 'CPF/CNPJ: ';
+              const elDoc = document.getElementById('loja-doc');
+              elDoc.textContent = label + doc;
+              elDoc.hidden = false;
+            }
+            if (cfg.loja_endereco && cfg.loja_endereco.trim()) {
+              const elEnd = document.getElementById('loja-end');
+              elEnd.textContent = cfg.loja_endereco.trim();
+              elEnd.hidden = false;
+            }
+            if (cfg.loja_telefone && cfg.loja_telefone.trim()) {
+              const elTel = document.getElementById('loja-tel');
+              elTel.textContent = 'Tel: ' + cfg.loja_telefone.trim();
+              elTel.hidden = false;
+            }
+            if (cfg.cupom_rodape && cfg.cupom_rodape.trim()) {
+              document.getElementById('cupom-rodape').textContent = cfg.cupom_rodape.trim();
+            }
+          } catch (e) {
+            console.warn('Erro ao processar configurações da loja:', e);
+          }
+        }
+        
+        document.getElementById('r-data').textContent = venda.data;
+        document.getElementById('r-codigo').textContent = venda.codigo;
+        document.getElementById('r-vendedor').textContent = venda.vendedor_nome || 'N/A';
+        
+        const tbody = document.querySelector('#r-items tbody');
+        tbody.innerHTML = venda.itens.map(item => `
+          <tr>
+            <td class="item-name">
+              ${item.nome}
+              <div style="font-size: 10px; color: #444;">${item.tamanho} / ${item.cor} (Cx ${item.quantidade} x ${fmtMoney(item.preco_unit)})</div>
+            </td>
+            <td class="item-qty">${item.quantidade}</td>
+            <td class="item-total">${fmtMoney(item.total)}</td>
+          </tr>
+        `).join('');
+        
+        document.getElementById('r-subtotal').textContent = fmtMoney(venda.subtotal);
+        document.getElementById('r-desconto').textContent = fmtMoney(venda.desconto);
+        document.getElementById('r-total').textContent = fmtMoney(venda.total);
+        
+        const paysDiv = document.getElementById('r-payments');
+        paysDiv.innerHTML = venda.pagamentos.map(p => `
+          <div class="totals-row">
+            <span>${p.forma} ${p.parcelas > 1 ? `(${p.parcelas}x)` : ''}</span>
+            <span>${fmtMoney(p.valor)}</span>
+          </div>
+        `).join('');
+        
+        if (venda.troco > 0) {
+          paysDiv.innerHTML += `
+            <div class="totals-row" style="margin-top: 8px; font-weight: bold;">
+              <span>Troco</span>
+              <span>${fmtMoney(venda.troco)}</span>
+            </div>
+          `;
+        }
+        
+        document.getElementById('loading').hidden = true;
+        document.getElementById('receipt').hidden = false;
+        
+        // Espera renderização e dispara impressão
+        setTimeout(() => window.print(), 500);
+        
+      } catch (err) {
+        document.getElementById('loading').textContent = err.message;
+      }
+    }
+    
+    loadReceipt();
+  </script>
+</body>
+</html>

@@ -1,16 +1,39 @@
-# Arquivos e pastas a serem ignorados pelo Git
+# Python / Cache
 __pycache__/
-*.pyc
-*.pyo
-*.pyd
+*.py[cod]
+*$py.class
+
+# Banco de dados e arquivos SQLite
 *.db
+*.sqlite
 *.sqlite3
+*.db-wal
+*.db-shm
+*.bak
+
+# Ambiente virtual, variáveis de ambiente e IDE
+venv/
+.venv/
+.env
+.env.*
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+*.log
+
+# Empacotamento e arquivos temporários
+scratch/
 build/
 dist/
 *.spec
-.env
-venv/
-.env/
-.DS_Store
-*.log
-static/images/placeholder.txt
+*.zip
+
+# Dados de runtime, uploads e segredos (nunca versionar)
+instance/
+backups/
+static/images/*
+!static/images/placeholder.svg
+
+# Scripts auxiliares locais de captura de tela
+capturar_*.js
